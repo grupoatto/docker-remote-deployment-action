@@ -26,6 +26,9 @@ inputs:
   docker_registry_token:
     description: The docker registry password.
     required: false
+  docker_api_version:
+    description: The docker API version. Default is 1.40.
+    required: false
   docker_registry_uri:
     description: The docker registry URI. Default is https://registry.hub.docker.com.
     required: false
