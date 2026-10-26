@@ -1,44 +1,77 @@
 name: Docker Remote Deployment
-description: Ação do Github para implantação de projetos utilizando Docker-compose ou Swarm.
+description: Deploy em um Docker ou Swarm remoto por SSH (script, docker stack deploy ou docker compose).
+author: Grupo ATTO
+
 inputs:
   remote_docker_host:
-    description: Remote Docker host ie (user@host).
+    description: Usuário e host do Docker remoto (ex. docker@172.16.0.63).
     required: true
   remote_docker_port:
-    description: Remote Docker ssh port ie (22).
+    description: Porta SSH do host remoto.
     required: false
-    default: '22'
-  ssh_public_key:
-    description: Remote Docker SSH public key eg (~/.ssh/rsa_id.pub).
-    required: true
+    default: "22"
   ssh_private_key:
-    description: SSH private key used to connect to the docker host eg (~/.ssh/rsa_id).
+    description: Chave privada SSH (conteúdo) com acesso ao Docker do host.
     required: true
+  ssh_known_hosts:
+    description: >-
+      Linhas do known_hosts do servidor (saída conferida de `ssh-keyscan -p <porta> <host>`).
+      Recomendado; sem ele a chave do host é aceita na primeira conexão, com aviso.
+    required: false
+    default: ""
+  ssh_public_key:
+    description: Obsoleto e ignorado (mantido para não quebrar workflows da v5).
+    required: false
+    default: ""
   deployment_mode:
-    description: Deployment mode either docker-swarm or docker-compose. Default is docker-compose.
+    description: "script (padrão) | swarm | compose."
     required: false
-  stack_file_name:
-    description: Docker stack file used. Default is docker-compose.yml.
-    required: false
-  docker_registry_username:
-    description: The docker registry username.
-    required: false
-  docker_registry_token:
-    description: The docker registry password.
-    required: false
-  docker_api_version:
-    description: The docker API version. Default is 1.40.
-    required: false
-  docker_registry_uri:
-    description: The docker registry URI. Default is https://registry.hub.docker.com.
-    required: false
+    default: script
   docker_script:
-    description: The script to run single service
+    description: Script bash executado no modo script, com DOCKER_HOST já apontando para o host.
     required: false
+    default: ""
+  stack_file_name:
+    description: Arquivo(s) de stack/compose dos modos swarm e compose, separados por espaço.
+    required: false
+    default: docker-compose.yaml
+  stack_name:
+    description: Nome da stack (obrigatório no modo swarm; project name no modo compose).
+    required: false
+    default: ""
+  working_directory:
+    description: Diretório, relativo ao workspace, onde o deploy roda.
+    required: false
+    default: "."
+  docker_registry_uri:
+    description: Registry do docker login (ex. ghcr.io). Vazio = Docker Hub.
+    required: false
+    default: ""
+  docker_registry_username:
+    description: Usuário do registry. O login só acontece com usuário e token preenchidos.
+    required: false
+    default: ""
+  docker_registry_token:
+    description: Token do registry.
+    required: false
+    default: ""
+  docker_api_version:
+    description: Força a versão da API do Docker (ex. 1.44). Vazio = negociada com o daemon.
+    required: false
+    default: ""
+  debug:
+    description: "true imprime o script completo e liga o log detalhado do SSH."
+    required: false
+    default: "false"
+
+outputs:
+  docker_server_version:
+    description: Versão do Docker do host remoto.
 
 runs:
   using: docker
-  image: Dockerfile
+  # Imagem pronta, publicada pelo release.yaml; a tag acompanha a versão desta action.
+  image: docker://ghcr.io/grupoatto/docker-remote-deployment-action:v6.0.0
 
 branding:
   icon: send

@@ -1,5 +1,21 @@
 {
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "extends": [
-    "config:base"
+    "config:recommended",
+    "docker:pinDigests",
+    "helpers:pinGitHubActionDigests"
+  ],
+  "packageRules": [
+    {
+      "description": "CLI da imagem e dind do teste andam juntos",
+      "matchDatasources": ["docker"],
+      "matchPackageNames": ["docker"],
+      "groupName": "docker"
+    },
+    {
+      "description": "A imagem da própria action é atualizada pelo release (make release-prep)",
+      "matchPackageNames": ["ghcr.io/grupoatto/docker-remote-deployment-action"],
+      "enabled": false
+    }
   ]
 }

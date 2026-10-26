@@ -1,43 +1,30 @@
 name: CI
 
 on:
-  release:
-    types:
-      - created
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
-  build:
-    name: Build Docker Image and Push to AWS
-    runs-on: ubuntu-22.04
-    permissions:
-      id-token: write
-      contents: read
+  lint:
+    name: Lint
+    runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v3
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v2
+      - uses: actions/checkout@v4
+      - name: shellcheck, shfmt, hadolint e actionlint
+        run: make lint
 
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v1
-        with:
-          role-to-assume: arn:aws:iam::716039377545:role/gh-actions-docker-remote-deployment
-          aws-region: sa-east-1
-
-      - name: Login to Amazon ECR
-        id: login-ecr
-        uses: aws-actions/amazon-ecr-login@v1
-
-      - name: Build Image and Push to ECR
-        id: build-image
-        uses: docker/build-push-action@v2
-        env:
-          IMAGE_TAG: ${{ github.ref_name }}
-          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-        with:
-          context: .
-          push: true
-          file: ./Dockerfile
-          tags: |
-            ${{ env.ECR_REGISTRY }}/docker-deployment-action:${{ env.IMAGE_TAG }}
-          cache-from: type=registry,ref=${{ env.ECR_REGISTRY }}/docker-deployment-action:${{ env.IMAGE_TAG }}
-          cache-to: type=inline
+  test:
+    name: Integração (dind + sshd)
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build e teste
+        run: make test
